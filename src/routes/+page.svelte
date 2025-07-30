@@ -3,6 +3,7 @@
 	import Matter from 'matter-js';
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
+	import { supabase } from '$lib/supabaseClient';
 
 	const MAX_CHARACTER_RENDERED = 100;
 	let characters: Matter.Body[] = [];
@@ -21,11 +22,27 @@
 
 	let animationFrameId: number;
 
+	const myChannel = supabase.channel('char-cascade');
+
 	const getContainerDimensions = (element: HTMLElement) => {
 		return {
 			width: element.clientWidth,
 			height: element.clientHeight
 		};
+	};
+
+	const createCharacter = (x: number, y: number, size: number, options: Matter.IBodyDefinition) => {
+		const charBody = Matter.Bodies.circle(x, y, size, options);
+
+		characters.push(charBody);
+		if (characters.length > MAX_CHARACTER_RENDERED) {
+			const bodyToRemove = characters.shift(); // Remove the oldest body from the array
+			if (bodyToRemove) {
+				Matter.Composite.remove(world, bodyToRemove);
+			}
+		}
+
+		Matter.Composite.add(world, charBody);
 	};
 
 	const handleGlobalKeyPress = (e: KeyboardEvent) => {
@@ -69,7 +86,7 @@
 
 		const size = 20;
 		const colors = ['#E74C3C', '#3498DB', '#2ECC71', '#F1C40F', '#9B59B6'];
-		const charBody = Matter.Bodies.circle(startX, startY, size, {
+		const options = {
 			restitution: 0.7, // Make it a bit bouncy
 			friction: 0.5,
 			density: 0.001,
@@ -83,18 +100,30 @@
 					family: 'Cherry Bomb One'
 				}
 			}
+		};
+		createCharacter(startX, startY, size, options);
+
+		// Send to channel
+		const payload = {
+			x: startX,
+			y: startY,
+			size: size,
+			options
+		};
+		myChannel.send({
+			type: 'broadcast',
+			event: 'input',
+			payload
 		});
-
-		characters.push(charBody);
-		if (characters.length > MAX_CHARACTER_RENDERED) {
-			const bodyToRemove = characters.shift(); // Remove the oldest body from the array
-			if (bodyToRemove) {
-				Matter.Composite.remove(world, bodyToRemove);
-			}
-		}
-
-		Matter.Composite.add(world, charBody);
 	};
+
+	// Subscribe to Supabase Channel
+	myChannel
+		.on('broadcast', { event: 'input' }, (msg) => {
+			const { x, y, size, options } = msg.payload;
+			createCharacter(x, y, size, options);
+		})
+		.subscribe();
 
 	// Define handleResize outside onMount to make it accessible by onDestroy
 	const handleResize = () => {

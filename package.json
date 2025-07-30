@@ -41,6 +41,7 @@
 		"vite-plugin-devtools-json": "^0.2.0"
 	},
 	"dependencies": {
+		"@supabase/supabase-js": "^2.53.0",
 		"@types/matter-js": "^0.19.8",
 		"matter-js": "^0.20.0",
 		"svelte-i18n": "^4.0.1"
