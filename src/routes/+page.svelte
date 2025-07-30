@@ -177,7 +177,6 @@
 			return;
 		}
 
-		const initMatter = () => {};
 		matterContainer = document.getElementById('matter-container') as HTMLCanvasElement;
 		const ctaElement = document.getElementById('cta-text') as HTMLElement;
 
@@ -190,7 +189,7 @@
 			return;
 		}
 
-		const { Engine, Runner, MouseConstraint, Mouse, Composite, Bodies } = Matter;
+		const { Engine, Runner, MouseConstraint, Mouse, Composite } = Matter;
 
 		engine = Engine.create();
 		world = engine.world;
