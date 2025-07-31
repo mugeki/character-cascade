@@ -4,6 +4,7 @@
 	import { browser } from '$app/environment';
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabaseClient';
+	import type { RealtimeChannel } from '@supabase/supabase-js';
 
 	const MAX_CHARACTER_RENDERED = 100;
 	let characters: Matter.Body[] = [];
@@ -22,7 +23,7 @@
 
 	let animationFrameId: number;
 
-	const myChannel = supabase.channel('char-cascade');
+	let myChannel: RealtimeChannel;
 
 	const getContainerDimensions = (element: HTMLElement) => {
 		return {
@@ -117,14 +118,6 @@
 		});
 	};
 
-	// Subscribe to Supabase Channel
-	myChannel
-		.on('broadcast', { event: 'input' }, (msg) => {
-			const { x, y, size, options } = msg.payload;
-			createCharacter(x, y, size, options);
-		})
-		.subscribe();
-
 	// Define handleResize outside onMount to make it accessible by onDestroy
 	const handleResize = () => {
 		if (!matterContainer) return;
@@ -202,6 +195,15 @@
 	};
 
 	onMount(() => {
+		// Subscribe to Supabase Channel
+		myChannel = supabase.channel('char-cascade');
+		myChannel
+			.on('broadcast', { event: 'input' }, (msg) => {
+				const { x, y, size, options } = msg.payload;
+				createCharacter(x, y, size, options);
+			})
+			.subscribe();
+
 		if (!browser) {
 			return;
 		}
