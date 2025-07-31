@@ -5,6 +5,9 @@
 	import { onMount } from 'svelte';
 	import { supabase } from '$lib/supabaseClient';
 	import type { RealtimeChannel } from '@supabase/supabase-js';
+	import { Button, Toast } from 'flowbite-svelte';
+	import Icon from '@iconify/svelte';
+	import { slide } from 'svelte/transition';
 
 	const MAX_CHARACTER_RENDERED = 100;
 	let characters: Matter.Body[] = [];
@@ -12,6 +15,8 @@
 	let lastKeyPressTime: number = 0;
 	let lastStartX: number | null = null;
 	const CONTINUOUS_INPUT_THRESHOLD = 500; // milliseconds
+
+	let showToast: boolean = $state(false);
 
 	let engine: Matter.Engine;
 	let runner: Matter.Runner;
@@ -208,6 +213,15 @@
 			return;
 		}
 
+		// Show toast
+		setTimeout(() => {
+			const isCreatedWindow = new URLSearchParams(window.location.search).has('created');
+			if (!isCreatedWindow) {
+				showToast = true;
+			}
+		}, 1000);
+
+		// Prepare Matter.js containers
 		matterContainer = document.getElementById('matter-container') as HTMLCanvasElement;
 		const ctaElement = document.getElementById('cta-text') as HTMLElement;
 
@@ -346,6 +360,36 @@
 		<p id="cta-text" class="text-gray-800">{$_('page.cta')}</p>
 		<span class="ellipsis mt-6"> </span>
 	</div>
+
+	<Toast
+		bind:toastStatus={showToast}
+		color="cyan"
+		class="absolute bottom-4 left-4 z-[3]"
+		align={false}
+		transition={slide}
+	>
+		{#snippet icon()}
+			<Icon icon="fluent:window-new-16-filled" width={20} />
+		{/snippet}
+		<div class="font-secondary text-sm font-normal">
+			<p class="mb-2 text-gray-900 dark:text-white">
+				{$_('page.toast')}
+			</p>
+			<Button
+				size="xs"
+				color="cyan"
+				onclick={() => {
+					window.open(
+						`${window.location.href}?created=1`,
+						'_blank',
+						'location=yes,height=570,width=520,scrollbars=yes,status=yes'
+					);
+					showToast = false;
+				}}
+				>Open
+			</Button>
+		</div>
+	</Toast>
 </div>
 
 <style>

@@ -1,5 +1,6 @@
 {
   "page": {
-    "cta": "Type something"
+    "cta": "Type something",
+    "toast": "Try opening a new window and see what happens!"
   }
 }
